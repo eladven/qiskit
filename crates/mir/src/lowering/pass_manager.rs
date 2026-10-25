@@ -2,8 +2,12 @@ use std::collections::BTreeSet;
 
 use qiskit_circuit::dag_circuit::DAGCircuit;
 use qiskit_circuit::operations::OperationRef;
+use qiskit_passmanager::{PassContext, StaticPass};
 
 pub struct MIRBlock {}
+
+qiskit_util::dyn_types::static_dyn_typed!(MIRBlock);
+impl qiskit_passmanager::IR for MIRBlock {}
 
 pub struct MIRBlockCreator {}
 
@@ -61,7 +65,11 @@ pub fn lower(dag: &DAGCircuit) -> MIRBlock {
         match instr.op.view() {
             OperationRef::PauliProductRotation(rotation) => {
                 let paulis: Vec<String> = rotation.x.iter().zip(rotation.z.iter()).map(|(&x, &z)| pauli_label(x, z).to_string()).collect();
-                mir_creator.pauli_rotate(&qargs_ids, &paulis, 0.0);
+                let angle = match rotation.angle.try_float() {
+                    Some(val) => val,
+                    None => 0.0
+                };
+                mir_creator.pauli_rotate(&qargs_ids, &paulis, angle);
             }
             OperationRef::PauliProductMeasurement(measurment) => {
                 let paulis: Vec<String> = measurment.x.iter().zip(measurment.z.iter()).map(|(&x, &z)| pauli_label(x, z).to_string()).collect();
@@ -73,4 +81,12 @@ pub fn lower(dag: &DAGCircuit) -> MIRBlock {
     
 
     mir_creator.get_block()
+}
+
+pub struct DagToMirLowering;
+
+impl StaticPass<DAGCircuit, MIRBlock> for DagToMirLowering {
+    fn run(&self, ir: Box<DAGCircuit>, _context: &mut PassContext) -> anyhow::Result<Box<MIRBlock>> {
+        Ok(Box::new(lower(&ir)))
+    }
 }
