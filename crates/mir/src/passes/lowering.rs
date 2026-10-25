@@ -1,83 +1,90 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
+use crate::{
+    instruction::MirInstruction,
+    mir::Mir,
+    ops::{
+        MirOp,
+        pbc::{AngleType, Pauli, PauliList, PauliRotation},
+    },
+    qid::{Qid, QidInfo, QidList},
+    symbol_table::SymbolIdList,
+};
 use qiskit_circuit::dag_circuit::DAGCircuit;
 use qiskit_circuit::operations::OperationRef;
 use qiskit_passmanager::{PassContext, StaticPass};
-use crate::mir::Mir;
 
-
-pub struct MIRCreator {}
-
-
-impl MIRCreator {
-    pub fn new() -> Self {Self {}}
-
-    pub fn create_qubit(&mut self, name: &str) {
-        println!("create_qubit {}", name);
-    }
-
-    pub fn pauli_rotate(&mut self, qargs: &[String], paulis: &[String], angle: f64){
-        println!("pauli_rotate: {:?} {:?} {:?}", qargs, paulis, angle);
-    }
-
-    pub fn pauli_measure(&mut self, qargs: &[String], paulis: &[String]){
-        println!("pauli_measure: {:?} {:?}", qargs, paulis);
-    }
-
-    pub fn get_block(self)-> Mir{
-        Mir::new()
-    }
-}
-
-fn pauli_label(x:bool, z:bool) -> &'static str {
+fn pauli_from_bits(x: bool, z: bool) -> Pauli {
     match (x, z) {
-        (false, false) => "I",
-        (true, false) => "X",
-        (false, true) => "Z",
-        (true, true) => "Y",
+        (false, false) => Pauli::I,
+        (true, false) => Pauli::X,
+        (false, true) => Pauli::Z,
+        (true, true) => Pauli::Y,
     }
 }
 
 pub fn lower(dag: &DAGCircuit) -> Mir {
-    let mut mir_creator = MIRCreator::new();
-    let mut qubits: BTreeSet<String> = BTreeSet::new();
+    let mut mir = Mir::new();
+    let mut qubits: BTreeSet<u32> = BTreeSet::new();
+    let mut qid_for_qubits: BTreeMap<u32, Qid> = BTreeMap::new();
 
     for node in dag.topological_op_nodes(false) {
         let instr = dag.dag()[node].unwrap_operation();
-        let qargs = dag.get_qargs(instr.qubits);
-        let qargs_ids : Vec<String> = qargs.iter().map(|q| q.0.to_string()).collect();
-        for qid in &qargs_ids {
-            qubits.insert(qid.clone());
+        for q in dag.get_qargs(instr.qubits) {
+            qubits.insert(q.0);
         }
     }
 
-    for qubit in &qubits{
-        mir_creator.create_qubit(qubit);
+    for qubit in qubits {
+        // TODO: remove print when MIR has real printer
+        println!("create_qubit {qubit}");
+        let qid = mir
+            .resource_table_mut()
+            .add_qid(QidInfo::new(crate::qid::BitLayout::Base(1)))
+            .expect("qid allocation should succeed");
+        qid_for_qubits.insert(qubit, qid);
     }
 
     for node in dag.topological_op_nodes(false) {
         let instr = dag.dag()[node].unwrap_operation();
         let qargs = dag.get_qargs(instr.qubits);
-        let qargs_ids : Vec<String> = qargs.iter().map(|q| q.0.to_string()).collect();
+        let qids = qargs.iter().map(|q| qid_for_qubits[&q.0]).collect();
         match instr.op.view() {
             OperationRef::PauliProductRotation(rotation) => {
-                let paulis: Vec<String> = rotation.x.iter().zip(rotation.z.iter()).map(|(&x, &z)| pauli_label(x, z).to_string()).collect();
-                let angle = match rotation.angle.try_float() {
-                    Some(val) => val,
-                    None => 0.0
-                };
-                mir_creator.pauli_rotate(&qargs_ids, &paulis, angle);
+                let paulis = rotation
+                    .x
+                    .iter()
+                    .zip(rotation.z.iter())
+                    .map(|(&x, &z)| pauli_from_bits(x, z))
+                    .collect();
+                let angle = rotation.angle.try_float().unwrap_or(0.0);
+                // TODO: remove print when MIR has real printer
+                println!("pauli_rotate {:?} {:?} {:?}", qids, paulis, angle);
+                let op = MirOp::PauliRotation(PauliRotation::new(
+                    PauliList::new(paulis),
+                    AngleType::new(angle),
+                ));
+                mir.instructions_mut().push_back(MirInstruction::new(
+                    op,
+                    QidList::new(qids),
+                    SymbolIdList::default(),
+                    SymbolIdList::default(),
+                ));
             }
             OperationRef::PauliProductMeasurement(measurment) => {
-                let paulis: Vec<String> = measurment.x.iter().zip(measurment.z.iter()).map(|(&x, &z)| pauli_label(x, z).to_string()).collect();
-                mir_creator.pauli_measure(&qargs_ids, &paulis);
+                let paulis: Vec<Pauli> = measurment
+                    .x
+                    .iter()
+                    .zip(measurment.z.iter())
+                    .map(|(&x, &z)| pauli_from_bits(x, z))
+                    .collect();
+                // TODO: remove print when MIR has real printer, and implemented pauli measure
+                println!("pauli_measure {:?} {:?}", qids, paulis);
             }
             _ => {}
         }
     }
-    
-
-    mir_creator.get_block()
+    mir
 }
 
 pub struct DagToMirLowering;

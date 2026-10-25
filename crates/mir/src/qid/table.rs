@@ -290,7 +290,7 @@ impl ops::Index<Qid> for ResourceTable {
     }
 }
 
-// TEMPORARY: ResourceTable is not actually thread-safe — Acyclic's is not 
+// TEMPORARY: ResourceTable is not actually thread-safe — Acyclic's is not
 // thread safe. This is here ONLY to enable using  MIR as passmanager IR..
 unsafe impl Sync for ResourceTable {}
 
