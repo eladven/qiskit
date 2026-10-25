@@ -1,7 +1,7 @@
 use qiskit_passmanager::PassManager;
 use qiskit_qpy::native_load_qpy;
 use qiskit_circuit::dag_circuit::DAGCircuit;
-use qiskit_mir::lowering::pass_manager::DagToMirLowering;
+use qiskit_mir::passes::lowering::DagToMirLowering;
 use qiskit_mir::mir::Mir;
 
 

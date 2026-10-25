@@ -17,7 +17,7 @@
 
 pub mod instruction;
 pub mod line_graph;
-pub mod lowering;
+pub mod passes;
 pub mod mir;
 pub mod ops;
 pub mod qid;
