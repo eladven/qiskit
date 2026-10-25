@@ -3,16 +3,13 @@ use std::collections::BTreeSet;
 use qiskit_circuit::dag_circuit::DAGCircuit;
 use qiskit_circuit::operations::OperationRef;
 use qiskit_passmanager::{PassContext, StaticPass};
-
-pub struct MIRBlock {}
-
-qiskit_util::dyn_types::static_dyn_typed!(MIRBlock);
-impl qiskit_passmanager::IR for MIRBlock {}
-
-pub struct MIRBlockCreator {}
+use crate::mir::Mir;
 
 
-impl MIRBlockCreator {
+pub struct MIRCreator {}
+
+
+impl MIRCreator {
     pub fn new() -> Self {Self {}}
 
     pub fn create_qubit(&mut self, name: &str) {
@@ -27,8 +24,8 @@ impl MIRBlockCreator {
         println!("pauli_measure: {:?} {:?}", qargs, paulis);
     }
 
-    pub fn get_block(self)-> MIRBlock{
-        MIRBlock{}
+    pub fn get_block(self)-> Mir{
+        Mir::new()
     }
 }
 
@@ -41,8 +38,8 @@ fn pauli_label(x:bool, z:bool) -> &'static str {
     }
 }
 
-pub fn lower(dag: &DAGCircuit) -> MIRBlock {
-    let mut mir_creator = MIRBlockCreator::new();
+pub fn lower(dag: &DAGCircuit) -> Mir {
+    let mut mir_creator = MIRCreator::new();
     let mut qubits: BTreeSet<String> = BTreeSet::new();
 
     for node in dag.topological_op_nodes(false) {
@@ -85,8 +82,8 @@ pub fn lower(dag: &DAGCircuit) -> MIRBlock {
 
 pub struct DagToMirLowering;
 
-impl StaticPass<DAGCircuit, MIRBlock> for DagToMirLowering {
-    fn run(&self, ir: Box<DAGCircuit>, _context: &mut PassContext) -> anyhow::Result<Box<MIRBlock>> {
+impl StaticPass<DAGCircuit, Mir> for DagToMirLowering {
+    fn run(&self, ir: Box<DAGCircuit>, _context: &mut PassContext) -> anyhow::Result<Box<Mir>> {
         Ok(Box::new(lower(&ir)))
     }
 }

@@ -1,7 +1,8 @@
 use qiskit_passmanager::PassManager;
 use qiskit_qpy::native_load_qpy;
 use qiskit_circuit::dag_circuit::DAGCircuit;
-use qiskit_mir::lowering::pass_manager::{DagToMirLowering, MIRBlock};
+use qiskit_mir::lowering::pass_manager::DagToMirLowering;
+use qiskit_mir::mir::Mir;
 
 
 #[test]
@@ -13,5 +14,5 @@ fn lower_bell_pbc(){
 
     let mut pm = PassManager::new();
     pm.try_push_static_pass(DagToMirLowering).unwrap();
-    pm.run::<DAGCircuit, MIRBlock>(dag).unwrap();
+    pm.run::<DAGCircuit, Mir>(dag).unwrap();
 }

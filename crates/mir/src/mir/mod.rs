@@ -28,6 +28,9 @@ pub struct Mir {
     symbol_table: SymbolTable,
 }
 
+qiskit_util::dyn_types::static_dyn_typed!(Mir);
+impl qiskit_passmanager::IR for Mir {}
+
 impl Mir {
     /// Create an empty Mir.
     pub fn new() -> Self {
