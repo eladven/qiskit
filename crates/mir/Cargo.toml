@@ -22,6 +22,10 @@ qiskit-util.workspace = true
 rustworkx-core.workspace = true
 thiserror.workspace = true
 
+[dependencies.pyo3]
+workspace = true
+features = ["hashbrown", "indexmap", "num-complex", "num-bigint", "smallvec"]
+
 [dev-dependencies]
 itertools.workspace = true
 qiskit-qpy.workspace = true

@@ -22,3 +22,37 @@ pub mod ops;
 pub mod passes;
 pub mod qid;
 pub mod symbol_table;
+
+use pyo3::prelude::*;
+use qiskit_circuit::dag_circuit::PyDAGCircuit;
+use crate::mir::Mir;
+use crate::passes::lowering::lower as rust_lower;
+
+#[pyclass(subclass, name = "Mir", module = "qiskit._accelerate.mir")]
+#[derive(Debug)]
+pub struct PyMir(pub Mir);
+
+#[pymethods]
+impl PyMir {
+    #[new]
+    pub fn new() -> Self {
+        PyMir(Mir::new())
+    }
+
+    fn __repr__(&self) -> String {
+        "Mir()".to_string()
+    }
+}
+
+#[pyfunction(name = "lower")]
+pub fn py_lower(dag: &PyDAGCircuit) -> PyResult<PyMir> {
+    let dag_ref = dag.try_read()?;
+    Ok(PyMir(rust_lower(dag_ref)))
+}
+
+#[pymodule(name = "mir")]
+pub fn mir_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add_class::<PyMir>()?;
+    m.add_function(wrap_pyfunction!(py_lower, m)?)?;
+    Ok(())
+}
