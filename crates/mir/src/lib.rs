@@ -23,10 +23,10 @@ pub mod passes;
 pub mod qid;
 pub mod symbol_table;
 
-use pyo3::prelude::*;
-use qiskit_circuit::dag_circuit::PyDAGCircuit;
 use crate::mir::Mir;
 use crate::passes::lowering::lower as rust_lower;
+use pyo3::prelude::*;
+use qiskit_circuit::dag_circuit::PyDAGCircuit;
 
 #[pyclass(subclass, name = "Mir", module = "qiskit._accelerate.mir")]
 #[derive(Debug)]
