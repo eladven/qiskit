@@ -1,9 +1,18 @@
-use std::{assert_eq, collections::{BTreeMap, BTreeSet}, format};
+use std::{
+    assert_eq,
+    collections::{BTreeMap, BTreeSet},
+    format,
+};
 
 use crate::{
-    instruction::MirInstruction, mir::Mir, ops::{
-        MirOp, pbc::{AngleType, Pauli, PauliList, PauliMeasure, PauliRotation},
-    }, qid::{Qid, QidInfo, QidList}, symbol_table::{Symbol, SymbolId, SymbolIdList, SymbolType},
+    instruction::MirInstruction,
+    mir::Mir,
+    ops::{
+        MirOp,
+        pbc::{AngleType, Pauli, PauliList, PauliMeasure, PauliRotation},
+    },
+    qid::{Qid, QidInfo, QidList},
+    symbol_table::{Symbol, SymbolId, SymbolIdList, SymbolType},
 };
 use qiskit_circuit::dag_circuit::DAGCircuit;
 use qiskit_circuit::operations::OperationRef;
@@ -30,7 +39,7 @@ pub fn lower(dag: &DAGCircuit) -> Mir {
         for q in dag.get_qargs(instr.qubits) {
             qubits.insert(q.0);
         }
-        for c in dag.get_cargs(instr.clbits){
+        for c in dag.get_cargs(instr.clbits) {
             clbits.insert(c.0);
         }
     }
@@ -88,13 +97,21 @@ pub fn lower(dag: &DAGCircuit) -> Mir {
                     .map(|(&x, &z)| pauli_from_bits(x, z))
                     .collect();
                 let node_clbits = dag.get_cargs(instr.clbits);
-                assert_eq!(node_clbits.len(), 1, "PauliProductMeasurement should have 1 clbits");
+                assert_eq!(
+                    node_clbits.len(),
+                    1,
+                    "PauliProductMeasurement should have 1 clbits"
+                );
                 let sym_id = sym_for_clbits[&node_clbits[0].0];
                 // TODO: remove print when MIR has real printer
                 println!("pauli_measure {:?} {:?} -> {:?}", qids, paulis, sym_id);
                 let op = MirOp::PauliMeasure(PauliMeasure::new(PauliList::new(paulis)));
-                mir.instructions_mut().push_back(MirInstruction::new(op, QidList::new(qids), 
-                SymbolIdList::default(), SymbolIdList::new(vec![sym_id])));
+                mir.instructions_mut().push_back(MirInstruction::new(
+                    op,
+                    QidList::new(qids),
+                    SymbolIdList::default(),
+                    SymbolIdList::new(vec![sym_id]),
+                ));
             }
             _ => {}
         }

@@ -130,11 +130,6 @@ impl fmt::Display for PauliMeasure {
     }
 }
 
-
-
-
-
-
 #[cfg(test)]
 mod tests {
     use super::*;

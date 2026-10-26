@@ -64,7 +64,7 @@ impl SymbolTableErrorKind {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum SymbolType {
-    Bool, 
+    Bool,
 }
 
 /// Symbol represents various types of classical information. This will start
@@ -82,7 +82,11 @@ pub struct Symbol {
 impl Symbol {
     /// Create a new (empty) symbol.
     pub const fn new(name: String, symbol_type: SymbolType) -> Self {
-        Self { sym_id: None, name, symbol_type }
+        Self {
+            sym_id: None,
+            name,
+            symbol_type,
+        }
     }
 
     /// Get the name for this symbol.
