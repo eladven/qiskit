@@ -109,6 +109,32 @@ impl fmt::Display for PauliRotation {
     }
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct PauliMeasure {
+    paulis: PauliList,
+}
+
+impl PauliMeasure {
+    pub fn new(paulis: PauliList) -> Self {
+        Self { paulis }
+    }
+
+    pub fn paulis(&self) -> &PauliList {
+        &self.paulis
+    }
+}
+
+impl fmt::Display for PauliMeasure {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "pauli_measure({:?}", self.paulis)
+    }
+}
+
+
+
+
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -122,5 +148,14 @@ mod tests {
 
         assert_eq!(*pauli_rotation.paulis(), PauliList(vec![Pauli::I; 8]));
         assert_eq!(pauli_rotation.angle(), AngleType(0.5));
+    }
+
+    #[test]
+    fn create_pauli_measure() {
+        let pauli_measure = PauliMeasure {
+            paulis: PauliList(vec![Pauli::I; 8]),
+        };
+
+        assert_eq!(*pauli_measure.paulis(), PauliList(vec![Pauli::I; 8]));
     }
 }
