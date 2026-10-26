@@ -89,7 +89,7 @@ mod tests {
     use crate::ops::MirOp;
     use crate::ops::pbc::{AngleType, Pauli, PauliList, PauliRotation};
     use crate::qid::{BitLayout, QidInfo, QidList};
-    use crate::symbol_table::{Symbol, SymbolIdList};
+    use crate::symbol_table::{Symbol, SymbolIdList, SymbolType};
 
     #[test]
     fn test_populate_mir() {
@@ -124,7 +124,7 @@ mod tests {
         // Add a symbol to Mir
         let sym_id = mir
             .symbol_table_mut()
-            .add(Symbol::new("a".to_string()))
+            .add(Symbol::new("a".to_string(), SymbolType::Bool))
             .unwrap();
 
         let symbol = mir.symbol_table().get(sym_id).unwrap();
